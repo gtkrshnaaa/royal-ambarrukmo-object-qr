@@ -68,7 +68,11 @@ exports.createObject = async (req, res) => {
             if (!name || !description || !location || !category_id) {
                 return res.status(400).json({ error: 'Missing required fields' });
             }
-            const image_urls = req.files ? req.files.map(file => '/uploads/' + file.filename) : [];
+            // Jika tidak ada file, set image_urls menjadi array kosong atau null
+            const image_urls = req.files && req.files.length > 0
+                ? req.files.map(file => '/uploads/' + file.filename)
+                : null;  // null jika tidak ada gambar
+
             const id = await objectModel.create(name, description, image_urls, location, category_id);
             res.status(201).json({ message: 'Object created', id });
         } catch (error) {
@@ -76,6 +80,7 @@ exports.createObject = async (req, res) => {
         }
     });
 };
+
 
 // Generate QR Code
 exports.generateQRCode = async (req, res) => {
@@ -135,9 +140,11 @@ exports.updateObject = async (req, res) => {
             if (!existingObject) {
                 return res.status(404).json({ error: 'Object not found' });
             }
+            // Jika tidak ada gambar baru, tetap menggunakan gambar lama atau set null
             const image_urls = req.files && req.files.length
                 ? req.files.map(file => '/uploads/' + file.filename)
-                : existingObject.images;
+                : existingObject.images || null; // Jika tidak ada gambar baru, tetap menggunakan gambar lama atau set null
+
             await objectModel.update(id, name, description, image_urls, location, category_id);
             res.status(200).json({ message: 'Object updated' });
         } catch (error) {
@@ -145,6 +152,7 @@ exports.updateObject = async (req, res) => {
         }
     });
 };
+
 
 // Delete Object
 exports.deleteObject = async (req, res) => {
